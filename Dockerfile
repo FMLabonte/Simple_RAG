@@ -13,5 +13,5 @@ RUN --mount=type=bind,src=./,target=/project,readonly \
     pip install /project
     
 VOLUME ["/vectore_store"]
-EXPOSE port 8000
+EXPOSE 8000
 CMD simple_rag
