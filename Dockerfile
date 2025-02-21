@@ -1,4 +1,4 @@
-FROM python:3.13-slim AS execute
+FROM python:3.12-slim AS execute
 
 LABEL author="Frederik Labonte"
 
@@ -18,4 +18,4 @@ RUN --mount=type=bind,src=./,target=/project,readonly \
     
 VOLUME ["/vectore_store"]
 EXPOSE 8000
-CMD simple_rag
+CMD [ "/bin/simple_rag" ]
