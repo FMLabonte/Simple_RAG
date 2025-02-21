@@ -5,14 +5,18 @@ build-backend = "hatchling.build"
 [project]
 name = "SimpleRAG"
 dynamic = ["version"]
-dependencies = []
+dependencies = ["llama-index-vector-stores-chroma",
+"OpenAI",
+"python-multipart",
+"llama-index-readers-file",
+"llama-index-embeddings-openai"]
 
 requires-python = ">=3.11"
 authors = [
-  {name = "Frederik", email = ""},
+  {name = "Frederik Labonte", email = "flabonte@uni-bonn.de"},
 ]
 maintainers = [
-  {name = "Frederik", email = ""}
+  {name = "Frederik Labonte", email = "flabonte@uni-bonn.de"}
 ]
 description = "A simple FastAPI wrapper around Llama-index and OpenAI's API."
 readme = "README.md"
