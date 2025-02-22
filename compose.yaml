@@ -1,0 +1,11 @@
+version: '0.1'
+
+services: 
+  simple_rag:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./chroma_db:/app/chroma_db
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}

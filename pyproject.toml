@@ -3,7 +3,7 @@ requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
-name = "SimpleRAG"
+name = "Simple_RAG"
 dynamic = ["version"]
 dependencies = ["llama-index-vector-stores-chroma",
 "OpenAI",
@@ -37,10 +37,10 @@ Documentation = "https://github.com/FMLabonte/Simple_RAG"
 Repository = "https://github.com/FMLabonte/Simple_RAG"
 
 [project.scripts]
-simple_rag = "SimpleRAG.__main__:main"
+simple_rag = "simple_rag.__main__:main"
 
 [tool.hatch.version]
 source = "vcs"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src"]
+packages = ["src/simple_rag"]

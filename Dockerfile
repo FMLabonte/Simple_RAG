@@ -16,6 +16,6 @@ RUN --mount=type=bind,src=./,target=/project,readonly \
     pip install --upgrade pip && \
     pip install /project
     
-VOLUME ["/vectore_store"]
+VOLUME ["/app/chroma_db"]
 EXPOSE 8000
-CMD [ "/bin/simple_rag" ]
+CMD [ "/venv/bin/simple_rag" ]
