@@ -55,8 +55,11 @@ To improve performance, more advanced or different ways of indexing could be imp
 Another nice addition would be the use of Local LLMs through, for example, VLLM or llama.cpp by making use of their OpenAI API-compatible endpoints.
 
 ## To test the RAG pipeline 
-I included a pdf of a game rulebook if you ask for example "what is black witch mech" after ingesting it the Openai endpint wihtout sources hallucinates while the endpoint with rag returns usefull information. 
-you can ofcourse test with yourn own documents. Use the Retrive sources endpoint to get an idea of if you need to shift some of the filters arround to retrive documents that seme relevant.    
+you can download the free pf rule book of Lancer a table top RPG which is rather unknown here: https://massif-press.itch.io/corebook-pdf-free and ingest the PDF in to the API.
+you can ask for example "what is the black witch mech", "what mechs are produced by horus" and compare those outputs with the Query OpenAI endpoint which hallucinates or provides maretebly different answers.
+
+you can of course test with yourn own documents. Use the Retrive sources endpoint to get an idea of if you need to shift some of the filters arround to retrive documents that seme relevant.
+Compare the answers of the Query with context endpoint with the query openAI endpoint. 
 
 ### Further Remarks
 The current script does not use classes due to some initial bugs with the UI elements. I decided, for time reasons and the rather small scale, to just use a direct implementation. For bigger projects and with a bit more time to figure out why the UI didn't like the Pydantic classes, that would be the chosen approach.
