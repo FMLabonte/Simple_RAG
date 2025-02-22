@@ -26,9 +26,8 @@ Provides a list of all existing databases.
 ### Remove_Database
 Allows you to delete a database by name.
 
-## how to run
-To run the docker container clone the git reposetory.
-create an .env file with your open AI api key if you have set that one as a system variable do the following
+## How to Run
+To run the Docker container, clone the Git repository. Create an `.env` file with your OpenAI API key. If you have set that as a system variable, follow these steps:
 
 ```
 cd Simple_RAG # go in to the RAG folder 
@@ -48,5 +47,9 @@ Lastly visit http://localhost:8000/docs to use the API
 
 ## Future Ideas
 To improve performance, more advanced or different ways of indexing could be implemented. For example, the Ingest endpoint could allow setting the chunk size or chunking by paragraph. For larger collections, summarizing document overviews and then searching further if a hit is found in the summarization could be beneficial. Additionally, a technique where the LLM generates a response first and then searches that against the database could be explored. To find optimal patterns, it would be necessary to construct a test case and then optimize performance based on it.
-Another nice addition would be the use of Local LLMs through for example VLLM or llama.cpp by making use of their openai api compatible endpoints. 
+
+Another nice addition would be the use of Local LLMs through, for example, VLLM or llama.cpp by making use of their OpenAI API-compatible endpoints.
+
+### Further Remarks
+The current script does not use classes due to some initial bugs with the UI elements. I decided, for time reasons and the rather small scale, to just use a direct implementation. For bigger projects and with a bit more time to figure out why the UI didn't like the Pydantic classes, that would be the chosen approach.
 
