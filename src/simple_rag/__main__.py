@@ -1,113 +1,30 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
-from pydantic import BaseModel
-from typing import List, Optional
+from fastapi import FastAPI, HTTPException, UploadFile, File
+from typing import List
 import uvicorn
-from llama_index.core import VectorStoreIndex, Document
+from llama_index.core import VectorStoreIndex
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core import StorageContext
-from llama_index.core.postprocessor import SimilarityPostprocessor
 import chromadb
-import io
 from openai import OpenAI
 import os
 from llama_index.core import SimpleDirectoryReader
 import tempfile
 import os
-import shutil
 import re
-from typing import Union, List
-from pathlib import Path
 
-##TODO add different splitting options
-##TODO try with classes for cleaner code # works but not as pretty for UI use
-##TODO(optional) add a two step function that first generates how a reply migh look to search with that
 
+# Initialize the FastAPI app
 app = FastAPI()
 
 # Store client instances for different users
 db_path= "/app/chroma_db"
-db = chromadb.PersistentClient(path=db_path)
+db = chromadb.PersistentClient(path=db_path) #checks for DB or creates it if it doesn't exist
 user_collections = {}
 
 
+# Helper functions
 
-@app.post("/ingest")
-async def ingest_documents(
-    db_name: str,
-    recursive: bool = False,
-    num_workers: int = 4,
-    files: List[UploadFile] = File(...)
-):
-    try:
-        # Create temporary directory for uploaded files
-        with tempfile.TemporaryDirectory() as temp_dir:
-            # Save uploaded files to temporary directory
-            saved_files = []
-            for file in files:
-                file_path = os.path.join(temp_dir, file.filename)
-                content = await file.read()
-                with open(file_path, "wb") as f:
-                    f.write(content)
-                saved_files.append(file_path)
 
-            # Use SimpleDirectoryReader to load documents
-            reader = SimpleDirectoryReader(
-                input_files=saved_files,  # Use specific files instead of directory
-                recursive=recursive,
-            )
-            documents = reader.load_data(num_workers=num_workers)
-
-            # Create or get user's collection
-            collection_name = db_name
-            chroma_collection = db.get_or_create_collection(collection_name)
-            
-            # Create vector store and storage context
-            vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
-            storage_context = StorageContext.from_defaults(vector_store=vector_store)
-            
-            # Create index with loaded documents
-            index = VectorStoreIndex.from_documents(
-                documents,
-                storage_context=storage_context
-            )
-            
-            # Store the index for later use
-            user_collections[db_name] = index
-            
-            return {
-                "message": f"Successfully ingested {len(documents)} documents for user {db_name}",
-                "filenames": [file.filename for file in files],
-                "document_count": len(documents)
-            }
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-@app.post("/query_openai")
-async def query_openai(query: str):
-    try:
-        # Initialize the OpenAI client
-        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        
-        # Create completion using GPT-4 or GPT-3.5-turbo
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",  # or "gpt-4" if you have access
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": query}
-            ],
-            temperature=0.7,
-            max_tokens=500
-        )
-        
-        return {
-            "answer": response.choices[0].message.content,
-            "model": response.model,
-            "query": query
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
 def extract_node_info(node_with_score, similarity_cutoff=0.7):
     """Extract node info only if score is above cutoff"""
     if node_with_score.score >= similarity_cutoff:
@@ -161,15 +78,141 @@ def filter_node_for_keyword(filtered_nodes: list, keywords: str, partial_match: 
         if any(pattern.search(node["text"]) for pattern in patterns)
     ]
 
+
+
+# API Endpoints
+
+
+@app.post("/ingest")
+async def ingest_documents(
+    db_name: str,
+    recursive: bool = False,
+    num_workers: int = 4,
+    files: List[UploadFile] = File(...)
+):
+    """
+    Ingest documents into a vector database for later querying.
+
+    Args:
+        db_name: Name of the database/collection to store documents
+        recursive: Whether to recursively process nested directories
+        num_workers: Number of parallel workers for document processing
+        files: List of files to be ingested (you can add multiple files through the add string item button)
+
+    Returns:
+        dict: Contains success message, list of ingested filenames, and document count
+
+    Raises:
+        HTTPException: If document ingestion fails
+    """
+    try:
+        # Create temporary directory for uploaded files
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Save uploaded files to temporary directory
+            saved_files = []
+            for file in files:
+                file_path = os.path.join(temp_dir, file.filename)
+                content = await file.read()
+                with open(file_path, "wb") as f:
+                    f.write(content)
+                saved_files.append(file_path)
+
+            # Use SimpleDirectoryReader to load documents
+            reader = SimpleDirectoryReader(
+                input_files=saved_files,  # Use specific files instead of directory
+                recursive=recursive,
+            )
+            documents = reader.load_data(num_workers=num_workers)
+
+            # Create or get user's collection
+            collection_name = db_name
+            chroma_collection = db.get_or_create_collection(collection_name)
+            
+            # Create vector store and storage context
+            vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
+            storage_context = StorageContext.from_defaults(vector_store=vector_store)
+            
+            # Create index with loaded documents
+            index = VectorStoreIndex.from_documents(
+                documents,
+                storage_context=storage_context
+            )
+            
+            # Store the index for later use
+            user_collections[db_name] = index
+            
+            return {
+                "message": f"Successfully ingested {len(documents)} documents for user {db_name}",
+                "filenames": [file.filename for file in files],
+                "document_count": len(documents)
+            }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.post("/query_openai")
+async def query_openai(query: str):
+    """
+    Send a query to OpenAI's API and get a response.
+
+    Args:
+        query: The question or prompt to send to OpenAI
+
+    Returns:
+        dict: Contains the AI's answer, model used, and original query
+
+    Raises:
+        HTTPException: If the OpenAI API call fails
+    """
+    try:
+        # Initialize the OpenAI client
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        
+        # Create completion using GPT-4 or GPT-3.5-turbo
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",  # or "gpt-4" if you have access
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": query}
+            ],
+            temperature=0.7,
+            max_tokens=500
+        )
+        
+        return {
+            "answer": response.choices[0].message.content,
+            "model": response.model,
+            "query": query
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/retrieve_sources")
 async def retrieve_sources(
     query: str,
+    database_name: str,
     keywords: str = None, # Comma-separated keywords
     similarity_cutoff: float = 0.7,
     top_k: int = 5,
-    database_name: str = "sampled_papers",
     partial_match: bool = False
 ):
+    """
+    Retrieve relevant sources from the vector database based on a query.
+
+    Args:
+        query: The search query to find relevant sources
+        keywords: Optional comma-separated keywords for additional filtering
+        similarity_cutoff: Minimum similarity score threshold (0-1)
+        top_k: Maximum number of sources to return
+        database_name: Name of the database to search in
+        partial_match: Whether to allow partial keyword matches
+
+    Returns:
+        dict: Contains retrieved sources, node counts, and filtering information
+
+    Raises:
+        HTTPException: If source retrieval fails
+    """
     try:
         # initialize client
         db = chromadb.PersistentClient(path=db_path)
@@ -215,12 +258,29 @@ async def retrieve_sources(
 @app.post("/query_with_context")
 async def query_with_context(
     query: str,
+    database_name: str,
     keywords: str = None, # Comma-separated keywords
     similarity_cutoff: float = 0.7,
     top_k: int = 5,
-    database_name: str = "sampled_papers",
     partial_match: bool = False
 ):
+    """
+    Query OpenAI with context from retrieved sources for more informed answers.
+
+    Args:
+        query: The question to answer
+        keywords: Optional comma-separated keywords for source filtering
+        similarity_cutoff: Minimum similarity score threshold (0-1)
+        top_k: Maximum number of sources to use for context
+        database_name: Name of the database to search in
+        partial_match: Whether to allow partial keyword matches
+
+    Returns:
+        dict: Contains AI's answer, model used, and source information
+
+    Raises:
+        HTTPException: If the query or source retrieval fails
+    """
     try:
         # Get sources using existing endpoint
         sources_response = await retrieve_sources(query =query, keywords=keywords,similarity_cutoff= similarity_cutoff, top_k=top_k, database_name=database_name, partial_match=partial_match)
@@ -319,6 +379,7 @@ async def remove_database(database_name: str):
 
 def main():
 	uvicorn.run(app, host="0.0.0.0", port=8000)
-	     
+
+# add a main function to run the app so that the toml knows where to point	     
 if __name__ == "__main__":
     main()
