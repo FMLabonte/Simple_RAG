@@ -27,7 +27,11 @@ Provides a list of all existing databases.
 Allows you to delete a database by name.
 
 ## How to Run
-To run the Docker container, clone the Git repository. Create an `.env` file with your OpenAI API key. If you have set that as a system variable, follow these steps:
+To run the Docker container, clone the Git repository. 
+```
+git clone https://github.com/FMLabonte/Simple_RAG.git
+```
+Create an `.env` file with your OpenAI API key. If you have set that as a system variable, follow these steps:
 
 ```
 cd Simple_RAG # go in to the RAG folder 
@@ -49,6 +53,10 @@ Lastly visit http://localhost:8000/docs to use the API
 To improve performance, more advanced or different ways of indexing could be implemented. For example, the Ingest endpoint could allow setting the chunk size or chunking by paragraph. For larger collections, summarizing document overviews and then searching further if a hit is found in the summarization could be beneficial. Additionally, a technique where the LLM generates a response first and then searches that against the database could be explored. To find optimal patterns, it would be necessary to construct a test case and then optimize performance based on it.
 
 Another nice addition would be the use of Local LLMs through, for example, VLLM or llama.cpp by making use of their OpenAI API-compatible endpoints.
+
+## To test the RAG pipeline 
+I included a pdf of a game rulebook if you ask for example "what is black witch mech" after ingesting it the Openai endpint wihtout sources hallucinates while the endpoint with rag returns usefull information. 
+you can ofcourse test with yourn own documents. Use the Retrive sources endpoint to get an idea of if you need to shift some of the filters arround to retrive documents that seme relevant.    
 
 ### Further Remarks
 The current script does not use classes due to some initial bugs with the UI elements. I decided, for time reasons and the rather small scale, to just use a direct implementation. For bigger projects and with a bit more time to figure out why the UI didn't like the Pydantic classes, that would be the chosen approach.
